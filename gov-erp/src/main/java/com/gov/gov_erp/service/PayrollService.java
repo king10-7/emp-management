@@ -173,12 +173,17 @@ public class PayrollService {
 
         double totalGross = payslips.stream().mapToDouble(Payslip::getGrossSalary).sum();
         double totalNet = payslips.stream().mapToDouble(Payslip::getNetSalary).sum();
+        double totalDeductions = payslips.stream()
+                .mapToDouble(p -> p.getEmployeeTaxAmount() + p.getPensionAmount()
+                        + p.getMedicalInsuranceAmount() + p.getOthersAmount())
+                .sum();
 
         return PayrollSummaryDTO.builder()
                 .month(month)
                 .year(year)
                 .processedEmployeesCount(payslips.size())
                 .totalGrossPayout(totalGross)
+                .totalDeductions(totalDeductions)
                 .totalNetPayout(totalNet)
                 .status("APPROVED")
                 .build();

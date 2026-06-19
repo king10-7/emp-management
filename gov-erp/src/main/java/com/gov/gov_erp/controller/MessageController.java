@@ -16,6 +16,14 @@ public class MessageController {
         this.messageService = messageService;
     }
 
+    // Temporary test endpoint
+    @PostMapping("/test")
+    public ResponseEntity<MessageResponseDTO> createTestMessage(@RequestParam Long employeeId,
+                                                               @RequestParam Integer month,
+                                                               @RequestParam Integer year) {
+        return ResponseEntity.ok(messageService.createTestMessage(employeeId, month, year));
+    }
+
     @GetMapping
     public ResponseEntity<List<MessageResponseDTO>> getAllMessages() {
         return ResponseEntity.ok(messageService.getAllMessages());

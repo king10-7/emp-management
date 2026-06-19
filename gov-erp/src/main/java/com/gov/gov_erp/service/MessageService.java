@@ -12,9 +12,28 @@ import java.util.stream.Collectors;
 @Service
 public class MessageService {
     private final MessageRepository messageRepository;
+    private final com.gov.gov_erp.repository.EmployeeRepository employeeRepository;
 
-    public MessageService(MessageRepository messageRepository) {
+    public MessageService(MessageRepository messageRepository,
+                          com.gov.gov_erp.repository.EmployeeRepository employeeRepository) {
         this.messageRepository = messageRepository;
+        this.employeeRepository = employeeRepository;
+    }
+
+    // Temporary method for testing
+    @Transactional
+    public MessageResponseDTO createTestMessage(Long employeeId, Integer month, Integer year) {
+        var employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new com.gov.gov_erp.exception.ResourceNotFoundException("Employee not found"));
+        var message = Message.builder()
+                .employee(employee)
+                .content("Dear " + employee.getFirstName() + " Test message")
+                .month(month)
+                .year(year)
+                .createdAt(java.time.LocalDateTime.now())
+                .build();
+        message = messageRepository.save(message);
+        return convertToDTO(message);
     }
 
     @Transactional(readOnly = true)

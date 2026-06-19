@@ -45,7 +45,7 @@ public class PayrollService {
                     .employeeTaxRate(30.0)
                     .pensionRate(6.0)
                     .medicalInsuranceRate(5.0)
-                    .othersRate(5.0)
+                    .othersRate(4.0)
                     .houseRate(14.0)
                     .transportRate(14.0)
                     .build();

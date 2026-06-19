@@ -1,5 +1,6 @@
 package com.gov.gov_erp;
 
+import com.gov.gov_erp.dto.PayrollRequestDTO;
 import com.gov.gov_erp.dto.PayrollSummaryDTO;
 import com.gov.gov_erp.entity.Deductions;
 import com.gov.gov_erp.entity.Employee;
@@ -48,7 +49,10 @@ class PayrollServiceTest {
     @Test
     void testPayrollCalculation_MathAccuracy() {
         // Arrange
-        String period = "2026-06";
+        PayrollRequestDTO request = new PayrollRequestDTO();
+        request.setMonth(6);
+        request.setYear(2026);
+        
         Employee mockEmployee = Employee.builder()
                 .id(1L)
                 .firstName("Jean Paul")
@@ -59,6 +63,7 @@ class PayrollServiceTest {
         Employment mockEmployment = Employment.builder()
                 .id(1L)
                 .employeeIdString("GR-2026-0043")
+                .institution("RCA")
                 .baseSalary(70000.0) // 70,000 FRW
                 .status(EmploymentStatus.ACTIVE)
                 .employee(mockEmployee)
@@ -78,12 +83,12 @@ class PayrollServiceTest {
                 .transportRate(14.0)
                 .build();
 
-        when(payslipRepository.existsByPayPeriod(period)).thenReturn(false);
+        when(payslipRepository.existsByMonthAndYear(request.getMonth(), request.getYear())).thenReturn(false);
         when(employmentRepository.findByStatus(EmploymentStatus.ACTIVE)).thenReturn(List.of(mockEmployment));
         when(deductionsRepository.findAll()).thenReturn(List.of(mockRates));
 
         // Act
-        PayrollSummaryDTO summary = payrollService.generatePayroll(period);
+        PayrollSummaryDTO summary = payrollService.generatePayroll(request);
 
         // Assert
         assertNotNull(summary);
@@ -103,8 +108,9 @@ class PayrollServiceTest {
         // Medical: 70,000 * 5% = 3,500 FRW
         // Others: 70,000 * 5% = 3,500 FRW
         // Total Deductions = 32,200 FRW
-        // Net Salary = Gross Salary - Total Deductions = 89,600 - 32,200 = 57,400 FRW (matches exam logic paper result)
-        assertEquals(57400.0, summary.getTotalNetPayout());
+        // Net Salary = Base Salary - Total Deductions = 70,000 - 32,200 = 57,800 FRW (matches user's example)
+        assertEquals(32200.0, summary.getTotalDeductions());
+        assertEquals(57800.0, summary.getTotalNetPayout());
 
         // Capture saved entity details to verify individual computations
         ArgumentCaptor<Payslip> payslipCaptor = ArgumentCaptor.forClass(Payslip.class);
@@ -112,17 +118,24 @@ class PayrollServiceTest {
 
         Payslip savedPayslip = payslipCaptor.getValue();
         assertEquals(89600.0, savedPayslip.getGrossSalary());
-        assertEquals(57400.0, savedPayslip.getNetSalary());
+        assertEquals(57800.0, savedPayslip.getNetSalary());
         assertEquals(21000.0, savedPayslip.getEmployeeTaxAmount());
         assertEquals(4200.0, savedPayslip.getPensionAmount());
         assertEquals(3500.0, savedPayslip.getMedicalInsuranceAmount());
         assertEquals(3500.0, savedPayslip.getOthersAmount());
+        assertEquals(9800.0, savedPayslip.getHouseAllowanceAmount());
+        assertEquals(9800.0, savedPayslip.getTransportAllowanceAmount());
+        assertEquals(6, savedPayslip.getMonth());
+        assertEquals(2026, savedPayslip.getYear());
     }
 
     @Test
     void testPayrollCalculation_DeductionsExceedGrossLimit() {
         // Arrange
-        String period = "2026-06";
+        PayrollRequestDTO request = new PayrollRequestDTO();
+        request.setMonth(6);
+        request.setYear(2026);
+        
         Employee mockEmployee = Employee.builder()
                 .id(1L)
                 .firstName("Jean Paul")
@@ -132,6 +145,7 @@ class PayrollServiceTest {
         Employment mockEmployment = Employment.builder()
                 .id(1L)
                 .employeeIdString("GR-2026-0043")
+                .institution("RCA")
                 .baseSalary(70000.0)
                 .status(EmploymentStatus.ACTIVE)
                 .employee(mockEmployee)
@@ -139,8 +153,7 @@ class PayrollServiceTest {
 
         mockEmployee.setEmployment(mockEmployment);
 
-        // Seed mock rates that cause deductions to exceed gross salary
-        // Tax = 90%, Pension = 20% -> Deductions = 110% of base salary, exceeding gross salary (128% of base)
+        // Seed mock rates that cause deductions to exceed base salary
         Deductions mockRates = Deductions.builder()
                 .id(1L)
                 .employeeTaxRate(90.0)
@@ -151,14 +164,14 @@ class PayrollServiceTest {
                 .transportRate(14.0)
                 .build();
 
-        when(payslipRepository.existsByPayPeriod(period)).thenReturn(false);
+        when(payslipRepository.existsByMonthAndYear(request.getMonth(), request.getYear())).thenReturn(false);
         when(employmentRepository.findByStatus(EmploymentStatus.ACTIVE)).thenReturn(List.of(mockEmployment));
         when(deductionsRepository.findAll()).thenReturn(List.of(mockRates));
 
         // Act & Assert
         // Should throw ValidationException due to deductions audit check
         assertThrows(ValidationException.class, () -> {
-            payrollService.generatePayroll(period);
+            payrollService.generatePayroll(request);
         });
     }
 }

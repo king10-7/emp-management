@@ -91,6 +91,7 @@ public class PayrollService {
 
         int processedCount = 0;
         double batchGrossTotal = 0.0;
+        double batchDeductionsTotal = 0.0;
         double batchNetTotal = 0.0;
 
         for (Employment contract : activeContracts) {
@@ -143,6 +144,7 @@ public class PayrollService {
 
             processedCount++;
             batchGrossTotal += grossSalary;
+            batchDeductionsTotal += totalDeductions;
             batchNetTotal += netSalary;
         }
 
@@ -151,6 +153,7 @@ public class PayrollService {
                 .year(year)
                 .processedEmployeesCount(processedCount)
                 .totalGrossPayout(batchGrossTotal)
+                .totalDeductions(batchDeductionsTotal)
                 .totalNetPayout(batchNetTotal)
                 .status("SUCCESSFUL")
                 .build();

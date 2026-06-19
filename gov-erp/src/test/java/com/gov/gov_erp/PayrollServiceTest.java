@@ -49,9 +49,8 @@ class PayrollServiceTest {
     @Test
     void testPayrollCalculation_MathAccuracy() {
         // Arrange
-        PayrollRequestDTO request = new PayrollRequestDTO();
-        request.setMonth(6);
-        request.setYear(2026);
+        Integer month = 6;
+        Integer year = 2026;
         
         Employee mockEmployee = Employee.builder()
                 .id(1L)
@@ -83,12 +82,12 @@ class PayrollServiceTest {
                 .transportRate(14.0)
                 .build();
 
-        when(payslipRepository.existsByMonthAndYear(request.getMonth(), request.getYear())).thenReturn(false);
+        when(payslipRepository.existsByMonthAndYear(month, year)).thenReturn(false);
         when(employmentRepository.findByStatus(EmploymentStatus.ACTIVE)).thenReturn(List.of(mockEmployment));
         when(deductionsRepository.findAll()).thenReturn(List.of(mockRates));
 
         // Act
-        PayrollSummaryDTO summary = payrollService.generatePayroll(request);
+        PayrollSummaryDTO summary = payrollService.generatePayroll(month, year);
 
         // Assert
         assertNotNull(summary);
@@ -132,9 +131,8 @@ class PayrollServiceTest {
     @Test
     void testPayrollCalculation_DeductionsExceedGrossLimit() {
         // Arrange
-        PayrollRequestDTO request = new PayrollRequestDTO();
-        request.setMonth(6);
-        request.setYear(2026);
+        Integer month = 6;
+        Integer year = 2026;
         
         Employee mockEmployee = Employee.builder()
                 .id(1L)
@@ -164,14 +162,14 @@ class PayrollServiceTest {
                 .transportRate(14.0)
                 .build();
 
-        when(payslipRepository.existsByMonthAndYear(request.getMonth(), request.getYear())).thenReturn(false);
+        when(payslipRepository.existsByMonthAndYear(month, year)).thenReturn(false);
         when(employmentRepository.findByStatus(EmploymentStatus.ACTIVE)).thenReturn(List.of(mockEmployment));
         when(deductionsRepository.findAll()).thenReturn(List.of(mockRates));
 
         // Act & Assert
         // Should throw ValidationException due to deductions audit check
         assertThrows(ValidationException.class, () -> {
-            payrollService.generatePayroll(request);
+            payrollService.generatePayroll(month, year);
         });
     }
 }

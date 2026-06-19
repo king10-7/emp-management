@@ -15,6 +15,7 @@ public class PayrollSummaryDTO {
     private Integer year;
     private int processedEmployeesCount;
     private Double totalGrossPayout;
+    private Double totalDeductions;
     private Double totalNetPayout;
     private String status;
 }
